@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as matImage
 
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import os
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"

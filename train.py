@@ -116,7 +116,6 @@ def main():
                 _img = _img.transpose((1, 2, 0))
                 _img = _img * 255
                 cv2.imwrite(os.path.join('debug.png'), _img)
-                pass
             if opt.self_supervised == "True":
                 imgn_train_2 = add_watermark_noise(img_train, occupancy, True, random_img, alpha=random.randint(3, 10) / 10) # opt.alpha
             else:
