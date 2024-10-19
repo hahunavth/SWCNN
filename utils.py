@@ -88,7 +88,7 @@ def add_watermark_noise(img_train, occupancy=50, self_surpervision=False, same_r
     watermark_np = watermark_np[:, :, 0:3]
     img_train = img_train.numpy()
     # img_train = Image.fromarray(img_train)
-    imgn_train = img_train
+    # imgn_train = img_train
     # 数据归一化
     _, water_h, water_w = watermark_np.shape
     occupancy = np.random.uniform(0, occupancy)
@@ -100,7 +100,7 @@ def add_watermark_noise(img_train, occupancy=50, self_surpervision=False, same_r
     img_for_cnt = Image.fromarray(img_for_cnt)
     new_w, new_h = watermark.size
     img_train = np.ascontiguousarray(np.transpose(img_train, (0, 2, 3, 1)))
-    imgn_train = np.ascontiguousarray(np.transpose(imgn_train, (0, 2, 3, 1)))
+    # imgn_train = np.ascontiguousarray(np.transpose(imgn_train, (0, 2, 3, 1)))
 
     for i in range(len(img_train)):
         tmp = Image.fromarray((img_train[i] * 255).astype(np.uint8))
@@ -304,6 +304,7 @@ from models import VGG16
 
 def load_froze_vgg16():
     # finetunning
+    
     model_pretrain_vgg = models.vgg16(pretrained=True)
 
     # load VGG16
@@ -322,6 +323,7 @@ def load_froze_vgg16():
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_vgg = nn.DataParallel(net_vgg, device_ids=device_ids).to(device)
+    # model_vgg = net_vgg.to(device)
     return model_vgg
 
 def data_augmentation(image, mode):

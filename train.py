@@ -15,6 +15,7 @@ from utils import *
 from torch.utils.tensorboard import SummaryWriter
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("device: ", device)
 n_watermark_images = len(os.listdir("watermark/translucence"))
 
 parser = argparse.ArgumentParser(description="SWCNN")
@@ -74,6 +75,7 @@ def main():
     model_vgg = load_froze_vgg16()
     device_ids = [0]
     model = nn.DataParallel(net, device_ids=device_ids).to(device)
+    # model = net.to(device)
 
     # load loss function
     if opt.loss == "L2":
@@ -105,10 +107,18 @@ def main():
             optimizer.zero_grad()
             img_train = data # batch
 
-            random_img = random.randint(1, n_watermark_images) # NOTE: hardcode 12
-            imgn_train = add_watermark_noise(img_train, 40, True, random_img, alpha=opt.alpha)
+            random_img = random.randint(1, n_watermark_images)
+            occupancy = 5
+            imgn_train = add_watermark_noise(img_train, occupancy, True, random_img, alpha=random.randint(3, 10) / 10) # opt.alpha
+            if epoch == 0 and i == 0:
+                # save one image to debug
+                _img = imgn_train[0]
+                _img = _img.transpose((1, 2, 0))
+                _img = _img * 255
+                cv2.imwrite(os.path.join('debug.png'), _img)
+                pass
             if opt.self_supervised == "True":
-                imgn_train_2 = add_watermark_noise(img_train, 40, True, random_img, alpha=opt.alpha)
+                imgn_train_2 = add_watermark_noise(img_train, occupancy, True, random_img, alpha=random.randint(3, 10) / 10) # opt.alpha
             else:
                 imgn_train_2 = img_train
 
