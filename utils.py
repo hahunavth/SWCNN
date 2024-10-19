@@ -132,7 +132,7 @@ def add_watermark_noise(img_train, occupancy=50, self_surpervision=False, same_r
             sum = (img_cnt > 0).sum()
             ratio = img_w * img_h * occupancy / 100
             if sum > ratio:
-                img_rgb = np.array(tmp).astype(np.float) / 255.
+                img_rgb = np.array(tmp).astype(np.float32) / 255.
                 img_train[i] = img_rgb[:, :, [0, 1, 2]]
                 break
     img_train = np.transpose(img_train, (0, 3, 1, 2))
@@ -320,7 +320,8 @@ def load_froze_vgg16():
             p.requires_grad = False
     device_ids = [0]
 
-    model_vgg = nn.DataParallel(net_vgg, device_ids=device_ids).cuda()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model_vgg = nn.DataParallel(net_vgg, device_ids=device_ids).to(device)
     return model_vgg
 
 def data_augmentation(image, mode):
@@ -359,4 +360,4 @@ import yaml
 # get configs
 def get_config(config):
     with open(config, 'r') as stream:
-        return yaml.load(stream)
+        return yaml.load(stream, Loader=yaml.FullLoader)

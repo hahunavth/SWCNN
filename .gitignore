@@ -1,0 +1,8 @@
+venv/
+data/
+runs/
+tmp/
+
+watermark/translucence/
+
+**/__pycache__/

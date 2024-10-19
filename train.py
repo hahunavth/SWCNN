@@ -14,6 +14,9 @@ from dataset import prepare_data, Dataset
 from utils import *
 from torch.utils.tensorboard import SummaryWriter
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+n_watermark_images = len(os.listdir("watermark/translucence"))
+
 parser = argparse.ArgumentParser(description="SWCNN")
 config = get_config('configs/config.yaml')
 parser.add_argument("--preprocess", type=bool, default=False, help='run prepare_data or not')
@@ -70,7 +73,7 @@ def main():
 
     model_vgg = load_froze_vgg16()
     device_ids = [0]
-    model = nn.DataParallel(net, device_ids=device_ids).cuda()
+    model = nn.DataParallel(net, device_ids=device_ids).to(device)
 
     # load loss function
     if opt.loss == "L2":
@@ -80,7 +83,7 @@ def main():
 
     # Load the trained network and continue training
     # model.load_state_dict(torch.load(os.path.join(opt.outf, 'net_water_UNet_sec1_per0313n.pth')))
-    criterion.cuda()
+    criterion.to(device)
     # Optimizer
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
     step = 0
@@ -100,9 +103,9 @@ def main():
             model.train()
             model.zero_grad()
             optimizer.zero_grad()
-            img_train = data
+            img_train = data # batch
 
-            random_img = random.randint(1, 12)
+            random_img = random.randint(1, n_watermark_images) # NOTE: hardcode 12
             imgn_train = add_watermark_noise(img_train, 40, True, random_img, alpha=opt.alpha)
             if opt.self_supervised == "True":
                 imgn_train_2 = add_watermark_noise(img_train, 40, True, random_img, alpha=opt.alpha)
@@ -111,13 +114,13 @@ def main():
 
             imgn_train = torch.Tensor(imgn_train)
             imgn_train_2 = torch.Tensor(imgn_train_2)
-            img_train, imgn_train = Variable(img_train.cuda()), Variable(imgn_train.cuda())
-            imgn_train_2 = Variable(imgn_train_2.cuda())
+            img_train, imgn_train = Variable(img_train.to(device)), Variable(imgn_train.to(device))
+            imgn_train_2 = Variable(imgn_train_2.to(device))
             if opt.net == "FFDNet":
                 noise_sigma = 0 / 255.
                 noise_sigma = torch.FloatTensor(np.array([noise_sigma for idx in range(img_train.shape[0])]))
                 noise_sigma = Variable(noise_sigma)
-                noise_sigma = noise_sigma.cuda()
+                noise_sigma = noise_sigma.to(device)
                 out_train = model(imgn_train, noise_sigma)
             else:
                 out_train = model(imgn_train)
@@ -163,12 +166,12 @@ def main():
                 imgn_val = add_watermark_noise(img_val, 0, alpha=opt.alpha)
                 img_val = torch.Tensor(img_val)
                 imgn_val = torch.Tensor(imgn_val)
-                img_val, imgn_val = Variable(img_val.cuda(), volatile=True), Variable(imgn_val.cuda(), volatile=True)
+                img_val, imgn_val = Variable(img_val.to(device), volatile=True), Variable(imgn_val.to(device), volatile=True)
                 if opt.net == "FFDNet":
                     noise_sigma = 0 / 255.
                     noise_sigma = torch.FloatTensor(np.array([noise_sigma for idx in range(img_val.shape[0])]))
                     noise_sigma = Variable(noise_sigma)
-                    noise_sigma = noise_sigma.cuda()
+                    noise_sigma = noise_sigma.to(device)
                     out_val = torch.clamp(model(imgn_val, noise_sigma), 0., 1.)
                 else:
                     out_val = torch.clamp(model(imgn_val), 0., 1.)
