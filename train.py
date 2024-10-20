@@ -36,6 +36,7 @@ parser.add_argument("--self_supervised", type=str, default="True", help='T stand
 parser.add_argument("--PN", type=str, default="True", help='Whether to use perception network')
 parser.add_argument("--GPU_id", type=str, default="2", help='GPU_id')
 parser.add_argument("--resume", type=str, default="", help='path to latest checkpoint (default: none)')
+parser.add_argument("--resume_opt", type=str, default="", help='path to latest checkpoint (default: none)')
 opt = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = opt.GPU_id
@@ -91,6 +92,8 @@ def main():
     criterion.to(device)
     # Optimizer
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
+    if opt.resume_opt != "":
+        optimizer.load_state_dict(torch.load(opt.resume_opt))
     step = 0
 
     for epoch in range(opt.epochs):
@@ -165,6 +168,10 @@ def main():
         model.eval()
         # Save the trained network parameters
         torch.save(model.state_dict(), os.path.join(opt.outf, model_name))
+        try:
+            torch.save(optimizer.state_dict(), os.path.join(opt.outf, 'optimizer.pth'))
+        except Exception as e:
+            print(e)
         # validate
         psnr_val = 0
         with torch.no_grad():
