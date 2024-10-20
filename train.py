@@ -35,6 +35,7 @@ parser.add_argument("--loss", type=str, default="L1", help='The loss function us
 parser.add_argument("--self_supervised", type=str, default="True", help='T stands for TRUE and F stands for FALSE')
 parser.add_argument("--PN", type=str, default="True", help='Whether to use perception network')
 parser.add_argument("--GPU_id", type=str, default="2", help='GPU_id')
+parser.add_argument("--resume", type=str, default="", help='path to latest checkpoint (default: none)')
 opt = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = opt.GPU_id
@@ -75,6 +76,8 @@ def main():
     model_vgg = load_froze_vgg16()
     device_ids = [0]
     model = nn.DataParallel(net, device_ids=device_ids).to(device)
+    if opt.resume != "":
+        model.load_state_dict(torch.load(opt.resume))
     # model = net.to(device)
 
     # load loss function
@@ -195,4 +198,5 @@ if __name__ == "__main__":
     # data preprocess
     if opt.preprocess:
         prepare_data(data_path=config['train_data_path'], patch_size=256, stride=128, aug_times=1, mode='color')
+        # prepare_data(data_path=config['train_data_path'], patch_size=256, stride=256, aug_times=1, mode='color')
     main()
